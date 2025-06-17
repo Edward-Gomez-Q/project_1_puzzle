@@ -16,7 +16,7 @@ class MainApp extends StatelessWidget {
     return Obx(
       () => MaterialApp.router(
         title: 'Project 1 Puzzle',
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: themeController.themeMode.value,
         routerConfig: AppRouter.router,

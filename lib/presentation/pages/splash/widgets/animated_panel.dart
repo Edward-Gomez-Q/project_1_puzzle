@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:project_1_puzzle/data/models/data_circle_model.dart';
+import 'package:project_1_puzzle/data/models/splash/data_circle_model.dart';
 
 class AnimatedColorPanel extends StatefulWidget {
   final double height;
@@ -124,7 +124,18 @@ class _AnimatedColorPanelState extends State<AnimatedColorPanel>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.primary,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
       child: SizedBox(
         height: widget.height,
         width: widget.width,

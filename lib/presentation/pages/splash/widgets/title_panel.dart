@@ -35,7 +35,7 @@ class _TitlePanelState extends State<TitlePanel>
       ..repeat(reverse: true);
 
     _opacityAnimation = Tween<double>(
-      begin: 0.2,
+      begin: 0.5,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_1_puzzle/core/theme/icon_styles.dart';
 import 'colors.dart';
 import 'text_styles.dart';
 
@@ -22,6 +23,10 @@ class AppTheme {
       bodyLarge: AppTextStyles.bodyLight,
       labelLarge: AppTextStyles.buttonLight,
     ),
+    iconTheme: IconThemeData(
+      color: AppIconStyles.lightPrimary,
+      size: AppIconStyles.medium,
+    ),
   );
 
   static ThemeData get dark => ThemeData(
@@ -42,6 +47,10 @@ class AppTheme {
       displayLarge: AppTextStyles.headingDark,
       bodyLarge: AppTextStyles.bodyDark,
       labelLarge: AppTextStyles.buttonDark,
+    ),
+    iconTheme: IconThemeData(
+      color: AppIconStyles.darkPrimary,
+      size: AppIconStyles.medium,
     ),
   );
 }

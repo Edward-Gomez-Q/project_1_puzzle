@@ -16,33 +16,38 @@ class _SplashState extends State<Splash> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final availableWidth = constraints.maxWidth;
-            final availableHeight = constraints.maxHeight;
-            return GestureDetector(
-              onTap: () {
-                context.go(RouteNames.home);
-              },
-              child: Column(
-                children: [
-                  AnimatedColorPanel(
-                    height: availableHeight * 0.7,
-                    width: availableWidth,
-                    duration: Duration(seconds: 2),
-                  ),
-                  TitlePanel(
-                    title: "Puzzle",
-                    nameAuthor: "Edward Gomez",
-                    version: "0.0.1",
-                    height: availableHeight * 0.3,
-                    width: availableWidth,
-                    duration: Duration(seconds: 2),
-                  ),
-                ],
-              ),
-            );
-          },
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final availableWidth = constraints.maxWidth;
+              final availableHeight = constraints.maxHeight;
+              return GestureDetector(
+                onTap: () {
+                  GoRouter.of(context).push(RouteNames.home);
+                },
+                child: Column(
+                  children: [
+                    AnimatedColorPanel(
+                      height: availableHeight * 0.7,
+                      width: availableWidth,
+                      duration: Duration(seconds: 2),
+                    ),
+                    TitlePanel(
+                      title: "Puzzle",
+                      nameAuthor: "Edward Gomez",
+                      version: "0.0.1",
+                      height: availableHeight * 0.3,
+                      width: availableWidth,
+                      duration: Duration(seconds: 2),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
