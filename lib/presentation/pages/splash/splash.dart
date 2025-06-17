@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:project_1_puzzle/config/routes/route_names.dart';
 import 'package:project_1_puzzle/presentation/pages/splash/widgets/animated_panel.dart';
 import 'package:project_1_puzzle/presentation/pages/splash/widgets/title_panel.dart';
 
@@ -19,7 +21,9 @@ class _SplashState extends State<Splash> {
             final availableWidth = constraints.maxWidth;
             final availableHeight = constraints.maxHeight;
             return GestureDetector(
-              onTap: () {},
+              onTap: () {
+                context.go(RouteNames.home);
+              },
               child: Column(
                 children: [
                   AnimatedColorPanel(

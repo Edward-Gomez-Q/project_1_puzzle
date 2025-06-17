@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class TitlePanel extends StatefulWidget {
   final String title;
@@ -49,32 +48,42 @@ class _TitlePanelState extends State<TitlePanel>
 
   @override
   Widget build(BuildContext context) {
-    final ctx = Get.context!;
-
     return Container(
       height: widget.height,
       width: widget.width,
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             widget.title,
-            style: Theme.of(ctx).textTheme.displayLarge,
+            style: Theme.of(context).textTheme.displayLarge,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           Text(
             "Hecho por ${widget.nameAuthor}",
             style: Theme.of(
-              ctx,
+              context,
             ).textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 5),
           Text(
             widget.version,
-            style: Theme.of(ctx).textTheme.labelLarge?.copyWith(
-              color: Theme.of(ctx).colorScheme.secondary,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
           const SizedBox(height: 16),
@@ -82,9 +91,11 @@ class _TitlePanelState extends State<TitlePanel>
             opacity: _opacityAnimation,
             child: Text(
               "Presiona en cualquier parte para ir al menú principal",
-              style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontSize: 14,
-                color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
