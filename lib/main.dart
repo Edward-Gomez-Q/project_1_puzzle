@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:project_1_puzzle/core/theme/app_theme.dart';
+import 'package:project_1_puzzle/presentation/getX/theme_controller.dart';
+import 'package:project_1_puzzle/presentation/pages/splash/splash.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(MainApp());
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
+  final ThemeController themeController = Get.put(ThemeController());
+  MainApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
+    return Obx(
+      () => GetMaterialApp(
+        title: 'Project 1 Puzzle',
+        theme: AppTheme.dark,
+        darkTheme: AppTheme.dark,
+        themeMode: themeController.themeMode.value,
+        home: const Splash(),
       ),
     );
   }
