@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:project_1_puzzle/presentation/pages/game/game.dart';
 import 'package:project_1_puzzle/presentation/pages/home/home.dart';
 import 'package:project_1_puzzle/presentation/pages/splash/splash.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,23 @@ class AppRouter {
         name: "home",
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, Home()),
+      ),
+      GoRoute(
+        path: RouteNames.game,
+        name: "game",
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return _buildPageWithTransition(
+            context,
+            state,
+            Game(
+              pattern: extra['pattern'],
+              difficulty: extra['difficulty'],
+              gameMode: extra['gameMode'],
+              puzzles: List<String>.from(extra['puzzles']),
+            ),
+          );
+        },
       ),
     ],
   );

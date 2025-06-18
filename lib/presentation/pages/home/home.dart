@@ -75,9 +75,10 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
+  List<String> puzzleContent = [];
   late AnimationController _menuController;
   late AnimationController _overlayController;
-  final double _carrouselHeight = 170.0;
+  final double _carrouselHeight = 150.0;
   bool _isMenuVisible = false;
 
   int selectedPatternIndex = 0;
@@ -216,28 +217,23 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                     selectedPattern != null &&
                                         selectedDifficulty != null
                                     ? () {
-                                        print('Configuración seleccionada:');
-                                        print(
-                                          'Patrón: ${selectedPattern?.title} (${selectedPattern?.code})',
-                                        );
-                                        print(
-                                          'Dificultad: ${selectedDifficulty?.title} (${selectedDifficulty?.code})',
-                                        );
-                                        print(
-                                          'Orden: ${selectedSort?.title} (${selectedSort?.code})',
-                                        );
-
                                         startGameWithConfig();
                                       }
                                     : null,
-                                icon: Icon(Icons.play_arrow),
-                                label: Text('¡Jugar!'),
+                                icon: Icon(
+                                  Icons.play_arrow,
+                                  size: Theme.of(context).iconTheme.size,
+                                  color: Theme.of(context).iconTheme.color,
+                                ),
+                                label: Text(
+                                  '¡Jugar!',
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 20,
                                     vertical: 12,
                                   ),
-                                  textStyle: TextStyle(fontSize: 16),
                                 ),
                               ),
                             ],
@@ -255,7 +251,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             child: IconButton(
                               icon: Icon(
                                 _isMenuVisible ? Icons.close : Icons.settings,
-                                size: 32,
+                                size: Theme.of(context).iconTheme.size,
+                                color: Theme.of(context).iconTheme.color,
                               ),
                               onPressed: _toggleMenu,
                               tooltip: _isMenuVisible
@@ -343,19 +340,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
     switch (pattern) {
       case 'ABC':
-        // Abecedario
         for (int i = 0; i < gridSize * gridSize - 1; i++) {
-          content.add(String.fromCharCode(65 + i)); // A, B, C, D...
+          content.add(String.fromCharCode(65 + i));
         }
         break;
       case '123':
-        // Números
         for (int i = 1; i < gridSize * gridSize; i++) {
           content.add(i.toString());
         }
         break;
       case 'RGB':
-        // Colores (usar nombres cortos o códigos)
         List<String> colors = [
           '🔴',
           '🟠',
@@ -379,7 +373,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         }
         break;
       case 'SHAPES':
-        // Formas geométricas
         List<String> shapes = [
           '○',
           '□',
@@ -403,7 +396,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         }
         break;
       case 'ANIMALS':
-        // Animales
         List<String> animals = [
           '🐶',
           '🐱',
@@ -442,15 +434,23 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           content.add(i.toString());
         }
     }
-    // Aplicar ordenamiento
-    if (sort == 'ASC') {
-      content.sort();
-    } else if (sort == 'DESC') {
-      content.sort((a, b) => b.compareTo(a));
-    } else if (sort == 'RANDOM') {
-      content.shuffle();
+    if (pattern != '123') {
+      if (sort == 'ASC') {
+        content.sort();
+      } else if (sort == 'DESC') {
+        content.sort((a, b) => b.compareTo(a));
+      } else if (sort == 'RANDOM') {
+        content.shuffle();
+      }
+    } else {
+      if (sort == 'ASC') {
+        content.sort((a, b) => int.parse(a).compareTo(int.parse(b)));
+      } else if (sort == 'DESC') {
+        content.sort((a, b) => int.parse(b).compareTo(int.parse(a)));
+      } else if (sort == 'RANDOM') {
+        content.shuffle();
+      }
     }
-
     return content;
   }
 
@@ -474,13 +474,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     }
 
     int gridSize = int.parse(selectedDifficulty!.code);
-    List<String> puzzleContent = generatePuzzleContent(
+    puzzleContent = generatePuzzleContent(
       gridSize,
       selectedPattern!.code,
       selectedSort?.code ?? 'ASC',
     );
 
-    return Container(
+    return SizedBox(
       height: 120,
       width: 120,
       child: GridView.builder(
@@ -505,7 +505,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             ),
             child: Center(
               child: isEmpty
-                  ? Icon(Icons.close, size: 12, color: Colors.grey[600])
+                  ? Icon(
+                      Icons.close,
+                      size: Theme.of(context).iconTheme.size,
+                      color: Theme.of(context).iconTheme.color,
+                    )
                   : Text(
                       puzzleContent[index],
                       style: TextStyle(
@@ -524,6 +528,20 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   void startGameWithConfig() {
-    if (selectedPattern != null && selectedDifficulty != null) {}
+    if (selectedPattern != null && selectedDifficulty != null) {
+      GoRouter.of(context).push(
+        '/game',
+        extra: {
+          'pattern': selectedPattern!.code,
+          'difficulty': selectedDifficulty!.code,
+          'gameMode': selectedSort?.code ?? 'ASC',
+          'puzzles': puzzleContent,
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, selecciona todas las opciones')),
+      );
+    }
   }
 }

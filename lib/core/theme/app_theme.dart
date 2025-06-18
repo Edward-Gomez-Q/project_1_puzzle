@@ -18,14 +18,26 @@ class AppTheme {
       onError: Colors.white,
     ),
     useMaterial3: true,
-    textTheme: TextTheme(
-      displayLarge: AppTextStyles.headingLight,
-      bodyLarge: AppTextStyles.bodyLight,
-      labelLarge: AppTextStyles.buttonLight,
+    textTheme: const TextTheme(
+      displayLarge: AppTextStyles.displayLargeLight,
+      displayMedium: AppTextStyles.displayMediumLight,
+      displaySmall: AppTextStyles.displaySmallLight,
+      headlineLarge: AppTextStyles.headlineLargeLight,
+      headlineMedium: AppTextStyles.headlineMediumLight,
+      headlineSmall: AppTextStyles.headlineSmallLight,
+      titleLarge: AppTextStyles.titleLargeLight,
+      titleMedium: AppTextStyles.titleMediumLight,
+      titleSmall: AppTextStyles.titleSmallLight,
+      bodyLarge: AppTextStyles.bodyLargeLight,
+      bodyMedium: AppTextStyles.bodyMediumLight,
+      bodySmall: AppTextStyles.bodySmallLight,
+      labelLarge: AppTextStyles.labelLargeLight,
+      labelMedium: AppTextStyles.labelMediumLight,
+      labelSmall: AppTextStyles.labelSmallLight,
     ),
     iconTheme: IconThemeData(
       color: AppIconStyles.lightPrimary,
-      size: AppIconStyles.medium,
+      size: AppIconStyles.small,
     ),
   );
 
@@ -43,14 +55,26 @@ class AppTheme {
       onError: Colors.white,
     ),
     useMaterial3: true,
-    textTheme: TextTheme(
-      displayLarge: AppTextStyles.headingDark,
-      bodyLarge: AppTextStyles.bodyDark,
-      labelLarge: AppTextStyles.buttonDark,
+    textTheme: const TextTheme(
+      displayLarge: AppTextStyles.displayLargeDark,
+      displayMedium: AppTextStyles.displayMediumDark,
+      displaySmall: AppTextStyles.displaySmallDark,
+      headlineLarge: AppTextStyles.headlineLargeDark,
+      headlineMedium: AppTextStyles.headlineMediumDark,
+      headlineSmall: AppTextStyles.headlineSmallDark,
+      titleLarge: AppTextStyles.titleLargeDark,
+      titleMedium: AppTextStyles.titleMediumDark,
+      titleSmall: AppTextStyles.titleSmallDark,
+      bodyLarge: AppTextStyles.bodyLargeDark,
+      bodyMedium: AppTextStyles.bodyMediumDark,
+      bodySmall: AppTextStyles.bodySmallDark,
+      labelLarge: AppTextStyles.labelLargeDark,
+      labelMedium: AppTextStyles.labelMediumDark,
+      labelSmall: AppTextStyles.labelSmallDark,
     ),
     iconTheme: IconThemeData(
       color: AppIconStyles.darkPrimary,
-      size: AppIconStyles.medium,
+      size: AppIconStyles.small,
     ),
   );
 }

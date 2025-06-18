@@ -129,14 +129,6 @@ class SlidingMenu extends StatelessWidget {
       }),
       MenuOptionButton(
         controller: controller,
-        icon: Icons.settings,
-        title: 'Configuración',
-        subtitle: 'Ajustes de la aplicación',
-        index: 1,
-        onTap: () => onMenuItemTap(MenuAction.route('/settings')),
-      ),
-      MenuOptionButton(
-        controller: controller,
         icon: Icons.arrow_back,
         title: 'Atrás',
         subtitle: 'Volver a la pantalla anterior',

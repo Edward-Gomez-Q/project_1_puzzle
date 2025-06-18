@@ -90,8 +90,9 @@ class _CarouselCardState extends State<CarouselCard>
                       ),
                       child: Icon(
                         widget.item.icon,
+
                         size: theme.iconTheme.size,
-                        color: theme.colorScheme.primary,
+                        color: theme.iconTheme.color,
                       ),
                     ),
                     const SizedBox(height: 4),
