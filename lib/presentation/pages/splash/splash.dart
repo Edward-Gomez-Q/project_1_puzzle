@@ -31,7 +31,7 @@ class _SplashState extends State<Splash> {
                 child: Column(
                   children: [
                     AnimatedColorPanel(
-                      height: availableHeight * 0.7,
+                      height: availableHeight * 0.5,
                       width: availableWidth,
                       duration: Duration(seconds: 2),
                     ),
@@ -39,7 +39,7 @@ class _SplashState extends State<Splash> {
                       title: "Puzzle",
                       nameAuthor: "Edward Gomez",
                       version: "0.0.1",
-                      height: availableHeight * 0.3,
+                      height: availableHeight * 0.5,
                       width: availableWidth,
                       duration: Duration(seconds: 2),
                     ),

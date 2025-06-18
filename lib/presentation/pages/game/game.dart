@@ -283,12 +283,12 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
                         children: [
                           Text(
                             'Tiempo: ${timeElapsed.inMinutes}:${(timeElapsed.inSeconds % 60).toString().padLeft(2, '0')}',
-                            style: theme.textTheme.titleLarge,
+                            style: theme.textTheme.titleSmall,
                           ),
-                          SizedBox(height: 8),
+                          SizedBox(height: 4),
                           Text(
                             'Movimientos: $moves',
-                            style: theme.textTheme.titleLarge,
+                            style: theme.textTheme.titleSmall,
                           ),
                         ],
                       ),
@@ -296,11 +296,11 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
                   ),
                   (isSolving || isAnimatingSolution || solutionResult != null)
                       ? Column(
-                          children: [SizedBox(height: 8), buildSolverResults()],
+                          children: [SizedBox(height: 2), buildSolverResults()],
                         )
                       : Container(),
                   buildPuzzleGame(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 4),
                   buildOptions(),
                 ],
               ),
@@ -380,8 +380,16 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           onPressed: () {
             GoRouter.of(context).go('/home');
           },
-          icon: Icon(Icons.exit_to_app, size: 20),
-          label: Text('Salir'),
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          ),
+          icon: Icon(Icons.exit_to_app, size: 10),
+          label: Text('Salir', style: Theme.of(context).textTheme.bodySmall),
         ),
         ElevatedButton.icon(
           onPressed: () {
@@ -421,8 +429,19 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
               ),
             );
           },
-          icon: Icon(Icons.refresh, size: 20),
-          label: Text('Reiniciar'),
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          ),
+          icon: Icon(Icons.refresh, size: 10),
+          label: Text(
+            'Reiniciar',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
         if (gridSize <= 4)
           ElevatedButton.icon(
@@ -431,8 +450,19 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
                 : () {
                     showSolutionDialog();
                   },
-            icon: Icon(Icons.flash_on_outlined, size: 20),
-            label: Text(isSolving ? 'Resolviendo...' : 'Solución'),
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
+            icon: Icon(Icons.flash_on_outlined, size: 10),
+            label: Text(
+              isSolving ? 'Resolviendo...' : 'Solución',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ),
       ],
     );
@@ -599,41 +629,56 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
 
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(4),
         child: Column(
           children: [
             Text(
-              'Resultado del Solver',
-              style: Theme.of(context).textTheme.titleMedium,
+              'Resultado de la máquina',
+              style: Theme.of(context).textTheme.titleSmall,
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 2),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Column(
+                Row(
                   children: [
-                    Text('Movimientos'),
+                    Text(
+                      'Movimientos: ',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     Text(
                       '${solutionResult!.moveCount}',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
-                Column(
+                Row(
                   children: [
-                    Text('Tiempo'),
+                    Text(
+                      'Tiempo: ',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     Text(
                       '${solutionResult!.solutionTimeMs}ms',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
-                Column(
+                Row(
                   children: [
-                    Text('Progreso'),
+                    Text(
+                      'Progreso: ',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     Text(
                       '$currentSolutionStep/${solutionMoves.length}',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -647,16 +692,20 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
 
   Widget buildPuzzleGame() {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(1.0),
       child: SizedBox(
-        height: 370,
+        height: 270,
+        width: 270,
         child: Stack(
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
               ),
               child: AnimatedBuilder(
                 animation: _pieceAnimation,
@@ -821,8 +870,8 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
         ? 3
         : (widget.difficulty == '4' ? 4 : 5);
     return SizedBox(
-      height: 120,
-      width: 120,
+      height: 80,
+      width: 80,
       child: GridView.builder(
         physics: NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

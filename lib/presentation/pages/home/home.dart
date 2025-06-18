@@ -78,7 +78,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   List<String> puzzleContent = [];
   late AnimationController _menuController;
   late AnimationController _overlayController;
-  final double _carrouselHeight = 150.0;
   bool _isMenuVisible = false;
 
   int selectedPatternIndex = 0;
@@ -234,6 +233,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                     horizontal: 20,
                                     vertical: 12,
                                   ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
                                 ),
                               ),
                             ],
@@ -298,7 +306,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     return CarouselSlider.builder(
       itemCount: items.length,
       options: CarouselOptions(
-        height: _carrouselHeight,
+        height: 75,
         enlargeCenterPage: true,
         enableInfiniteScroll: false,
         viewportFraction: 0.8,

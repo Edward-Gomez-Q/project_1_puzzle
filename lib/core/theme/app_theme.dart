@@ -39,6 +39,7 @@ class AppTheme {
       color: AppIconStyles.lightPrimary,
       size: AppIconStyles.small,
     ),
+    cardColor: AppColors.lightCardBackground,
   );
 
   static ThemeData get dark => ThemeData(
@@ -76,5 +77,6 @@ class AppTheme {
       color: AppIconStyles.darkPrimary,
       size: AppIconStyles.small,
     ),
+    cardColor: AppColors.darkCardBackground,
   );
 }

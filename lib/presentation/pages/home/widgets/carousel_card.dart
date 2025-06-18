@@ -77,13 +77,13 @@ class _CarouselCardState extends State<CarouselCard>
                     end: Alignment.bottomRight,
                   ),
                 ),
-                padding: EdgeInsets.all(6),
-                child: Column(
+                padding: EdgeInsets.all(2),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
@@ -95,29 +95,15 @@ class _CarouselCardState extends State<CarouselCard>
                         color: theme.iconTheme.color,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     SizedBox(
                       height: 24,
                       child: Text(
                         widget.item.title,
                         textAlign: TextAlign.center,
-                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          height: 1.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.item.description,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.7,
                         ),
                       ),
                     ),
