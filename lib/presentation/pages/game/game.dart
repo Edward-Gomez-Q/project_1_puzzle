@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:async';
 
+import 'package:go_router/go_router.dart';
+import 'package:project_1_puzzle/data/models/game/puzzle_solver.dart';
+import 'package:project_1_puzzle/data/models/game/solution_result.dart';
+
 class Game extends StatefulWidget {
   final String pattern;
   final String difficulty;
@@ -41,6 +45,16 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   Offset? movingPieceOffset;
   Timer? gameTimer;
 
+  bool isGameResolvedBySolver = false;
+  bool isSolving = false;
+  bool isAnimatingSolution = false;
+  SolutionResult? solutionResult;
+  List<int> solutionMoves = [];
+  int currentSolutionStep = 0;
+  Timer? solutionTimer;
+
+  late AnimationController _overlayController;
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +73,10 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     _pieceAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _pieceController, curve: Curves.easeOutBack),
     );
+    _overlayController = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
 
     initializePuzzle();
   }
@@ -66,8 +84,10 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   @override
   void dispose() {
     gameTimer?.cancel();
+    _overlayController.dispose();
     _curtainController.dispose();
     _pieceController.dispose();
+    solutionTimer?.cancel();
     super.dispose();
   }
 
@@ -236,89 +256,390 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(title: Text('Puzzle - ${widget.pattern}')),
       body: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  buildPuzzlePreview(),
-                  Column(
-                    children: [
-                      Text(
-                        'Tiempo: ${timeElapsed.inMinutes}:${(timeElapsed.inSeconds % 60).toString().padLeft(2, '0')}',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Movimientos: $moves',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text('Reiniciar juego'),
-                              content: Text(
-                                '¿Estás seguro de que quieres reiniciar el juego? Se perderán los avances actuales.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Text('Cancelar'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    resetGame();
-                                  },
-                                  child: Text('Reiniciar'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.refresh,
-                          size: theme.iconTheme.size,
-                          color: theme.iconTheme.color,
-                        ),
-                        label: Text(
-                          'Reiniciar',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ],
+        child: Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              buildPuzzleGame(),
-            ],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      buildPuzzlePreview(),
+                      Column(
+                        children: [
+                          Text(
+                            'Tiempo: ${timeElapsed.inMinutes}:${(timeElapsed.inSeconds % 60).toString().padLeft(2, '0')}',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Movimientos: $moves',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  (isSolving || isAnimatingSolution || solutionResult != null)
+                      ? Column(
+                          children: [SizedBox(height: 8), buildSolverResults()],
+                        )
+                      : Container(),
+                  buildPuzzleGame(),
+                  const SizedBox(height: 16),
+                  buildOptions(),
+                ],
+              ),
+            ),
+            if (isGameResolvedBySolver)
+              AnimatedBuilder(
+                animation: _overlayController,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _overlayController.value,
+                    child: Container(
+                      color: Colors.black54,
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: 32,
+                          ), // Espacio desde el fondo
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth:
+                                  300, // Opcional, si quieres limitarlo horizontalmente
+                            ),
+                            child: Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    if (isSolving) ...[
+                                      CircularProgressIndicator(),
+                                      SizedBox(height: 16),
+                                      Text('Resolviendo puzzle...'),
+                                      Text('Esto puede tomar unos segundos'),
+                                    ] else if (isAnimatingSolution) ...[
+                                      Icon(
+                                        Icons.auto_fix_high,
+                                        size: 32,
+                                        color: Colors.blue,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text('Ejecutando solución automática'),
+                                      Text(
+                                        'Paso $currentSolutionStep/${solutionMoves.length}',
+                                      ),
+                                      SizedBox(height: 8),
+                                      LinearProgressIndicator(
+                                        value: solutionMoves.isEmpty
+                                            ? 0
+                                            : currentSolutionStep /
+                                                  solutionMoves.length,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildOptions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        ElevatedButton.icon(
+          onPressed: () {
+            GoRouter.of(context).go('/home');
+          },
+          icon: Icon(Icons.exit_to_app, size: 20),
+          label: Text('Salir'),
+        ),
+        ElevatedButton.icon(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Reiniciar juego'),
+                content: Text(
+                  '¿Estás seguro de que quieres reiniciar el juego? Se perderán los avances actuales.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Cancelar'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      resetGame();
+                      setState(() {
+                        isGameResolvedBySolver = false;
+                        isSolving = false;
+                        isAnimatingSolution = false;
+                        solutionResult = null;
+                        solutionMoves.clear();
+                        currentSolutionStep = 0;
+                      });
+                      _overlayController.reverse();
+                      _curtainController.reset();
+                      _pieceController.reset();
+                    },
+                    child: Text('Reiniciar'),
+                  ),
+                ],
+              ),
+            );
+          },
+          icon: Icon(Icons.refresh, size: 20),
+          label: Text('Reiniciar'),
+        ),
+        if (gridSize <= 4)
+          ElevatedButton.icon(
+            onPressed: isSolving || isAnimatingSolution
+                ? null
+                : () {
+                    showSolutionDialog();
+                  },
+            icon: Icon(Icons.flash_on_outlined, size: 20),
+            label: Text(isSolving ? 'Resolviendo...' : 'Solución'),
           ),
+      ],
+    );
+  }
+
+  void showSolutionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Solución del puzzle'),
+        content: Text(
+          '¿Estás seguro de que quieres ver la solución del puzzle? Se perderán los avances actuales.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              startSolvingProcess();
+            },
+            child: Text('Solucionar puzzle'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void startSolvingProcess() async {
+    setState(() {
+      isSolving = true;
+      isGameResolvedBySolver = true;
+    });
+    await _overlayController.forward();
+    await solvePuzzleInBackground();
+    if (solutionResult != null && solutionResult!.solvable) {
+      await startSolutionAnimation();
+    } else {
+      showSolutionError();
+    }
+  }
+
+  Future<void> animateSolution(List<int> moves) async {
+    for (final move in moves) {
+      int tileToMove = move;
+      int index = currentPuzzle.indexOf(tileToMove.toString());
+
+      onPieceTap(index); // Esto ya maneja el swap y la animación
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    setState(() {
+      isGameResolvedBySolver = false; // Ocultamos overlay
+    });
+    _overlayController.reverse();
+  }
+
+  Future<void> solvePuzzleInBackground() async {
+    try {
+      PuzzleSolver solver = PuzzleSolver(
+        gridSize: gridSize,
+        targetPuzzle: solvedPuzzle,
+      );
+
+      // Ejecutar en compute para no bloquear UI
+      solutionResult = await Future.microtask(
+        () => solver.solvePuzzleComplete(List.from(currentPuzzle)),
+      );
+
+      if (solutionResult!.solvable) {
+        solutionMoves = solutionResult!.moves;
+        currentSolutionStep = 0;
+      }
+    } catch (e) {
+      solutionResult = null;
+    }
+
+    setState(() {
+      isSolving = false;
+    });
+  }
+
+  Future<void> startSolutionAnimation() async {
+    if (solutionMoves.isEmpty) return;
+
+    setState(() {
+      isAnimatingSolution = true;
+    });
+    gameTimer?.cancel();
+    for (int i = 0; i < solutionMoves.length; i++) {
+      await executeNextSolutionMove(solutionMoves[i]);
+      await Future.delayed(Duration(milliseconds: 500));
+    }
+    await finishSolutionAnimation();
+  }
+
+  Future<void> executeNextSolutionMove(int moveIndex) async {
+    if (!mounted) return;
+    setState(() {
+      movingPieceIndex = moveIndex;
+      currentSolutionStep++;
+    });
+    _pieceController.reset();
+    await _pieceController.forward();
+    setState(() {
+      movingPieceIndex = null;
+    });
+    swapPieces(moveIndex, emptyIndex);
+  }
+
+  Future<void> finishSolutionAnimation() async {
+    setState(() {
+      isAnimatingSolution = false;
+    });
+    await Future.delayed(Duration(milliseconds: 1000));
+    await _overlayController.reverse();
+    setState(() {
+      isGameResolvedBySolver = false;
+      solutionMoves.clear();
+      currentSolutionStep = 0;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('¡Puzzle resuelto automáticamente!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void showSolutionError() {
+    _overlayController.reverse();
+    setState(() {
+      isGameResolvedBySolver = false;
+      isSolving = false;
+    });
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('No se pudo encontrar una solución para este puzzle.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget buildSolverResults() {
+    if (solutionResult == null) return Container();
+
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Text(
+              'Resultado del Solver',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    Text('Movimientos'),
+                    Text(
+                      '${solutionResult!.moveCount}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text('Tiempo'),
+                    Text(
+                      '${solutionResult!.solutionTimeMs}ms',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text('Progreso'),
+                    Text(
+                      '$currentSolutionStep/${solutionMoves.length}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
