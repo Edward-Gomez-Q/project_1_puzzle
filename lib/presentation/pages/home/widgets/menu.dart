@@ -134,7 +134,7 @@ class SlidingMenu extends StatelessWidget {
         subtitle: 'Volver a la pantalla anterior',
         index: 2,
         onTap: () => onMenuItemTap(
-          MenuAction.function(() => GoRouter.of(context).pop()),
+          MenuAction.function(() => GoRouter.of(context).go('/')),
         ),
       ),
     ];
