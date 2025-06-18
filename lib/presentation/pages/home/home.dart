@@ -529,6 +529,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   void startGameWithConfig() {
     if (selectedPattern != null && selectedDifficulty != null) {
+      puzzleContent.add('X');
       GoRouter.of(context).push(
         '/game',
         extra: {
