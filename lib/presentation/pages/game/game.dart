@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:async';
@@ -11,6 +13,7 @@ class Game extends StatefulWidget {
   final String difficulty;
   final String gameMode;
   final List<String> puzzles;
+  final List<Uint8List>? imagePieces;
 
   const Game({
     super.key,
@@ -18,6 +21,7 @@ class Game extends StatefulWidget {
     required this.difficulty,
     required this.gameMode,
     required this.puzzles,
+    this.imagePieces,
   });
   @override
   State<Game> createState() => _GameState();
@@ -316,14 +320,9 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: 32,
-                          ), // Espacio desde el fondo
+                          padding: const EdgeInsets.only(bottom: 32),
                           child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth:
-                                  300, // Opcional, si quieres limitarlo horizontalmente
-                            ),
+                            constraints: BoxConstraints(maxWidth: 300),
                             child: Card(
                               child: Padding(
                                 padding: EdgeInsets.all(8),
@@ -799,6 +798,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   Widget buildPuzzlePiece(int index) {
     bool isEmpty = index == emptyIndex;
     bool isMoving = movingPieceIndex == index;
+    bool isImageMode = widget.imagePieces != null;
 
     return GestureDetector(
       onTap: () => onPieceTap(index),
@@ -811,12 +811,16 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           color: isEmpty
               ? Colors.grey[200]
-              : (isPuzzleSolved ? Colors.green[100] : Colors.blue[50]),
+              : (isPuzzleSolved
+                    ? Colors.green[100]
+                    : (isImageMode ? Colors.white : Colors.blue[50])),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isEmpty
                 ? Colors.grey[400]!
-                : (isPuzzleSolved ? Colors.green[400]! : Colors.blue[300]!),
+                : (isPuzzleSolved
+                      ? Colors.green[400]!
+                      : (isImageMode ? Colors.grey[300]! : Colors.blue[300]!)),
             width: 2,
           ),
           boxShadow: isEmpty
@@ -833,14 +837,18 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () => onPieceTap(index),
-            child: Center(
-              child: isEmpty
-                  ? Icon(
+            child: isEmpty
+                ? Center(
+                    child: Icon(
                       Icons.crop_free,
                       size: gridSize == 3 ? 20 : (gridSize == 4 ? 16 : 12),
                       color: Colors.grey[400],
-                    )
-                  : AnimatedDefaultTextStyle(
+                    ),
+                  )
+                : isImageMode
+                ? _buildImagePiece(index)
+                : Center(
+                    child: AnimatedDefaultTextStyle(
                       duration: Duration(milliseconds: 300),
                       style: TextStyle(
                         fontSize: gridSize == 3
@@ -857,9 +865,50 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
                             : '',
                       ),
                     ),
-            ),
+                  ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePiece(int index) {
+    String currentValue = index < currentPuzzle.length
+        ? currentPuzzle[index]
+        : '';
+
+    if (currentValue == 'X') {
+      return SizedBox.shrink();
+    }
+    int imageIndex = int.tryParse(currentValue) ?? 0;
+    imageIndex = imageIndex - 1;
+    if (imageIndex < 0 || imageIndex >= (widget.imagePieces?.length ?? 0)) {
+      return Container(
+        color: Colors.red[100],
+        child: Center(
+          child: Text(
+            'Error',
+            style: TextStyle(fontSize: 10, color: Colors.red),
+          ),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Image.memory(
+        widget.imagePieces![imageIndex],
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[200],
+            child: Center(
+              child: Icon(Icons.error, size: 16, color: Colors.red),
+            ),
+          );
+        },
       ),
     );
   }
@@ -869,6 +918,10 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     int gridSize = widget.difficulty == '3'
         ? 3
         : (widget.difficulty == '4' ? 4 : 5);
+
+    if (widget.imagePieces != null) {
+      return _buildImagePreview();
+    }
     return SizedBox(
       height: 80,
       width: 80,
@@ -905,6 +958,84 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
                         color: Colors.blue[800],
                       ),
                     ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildImagePreview() {
+    if (widget.imagePieces == null) {
+      return Container(
+        height: 120,
+        width: 120,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    int gridSize = widget.difficulty == '3'
+        ? 3
+        : (widget.difficulty == '4' ? 4 : 5);
+
+    return SizedBox(
+      height: 120,
+      width: 120,
+      child: GridView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: gridSize,
+          childAspectRatio: 1.0,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemCount: gridSize * gridSize,
+        itemBuilder: (context, index) {
+          bool isEmpty = index == gridSize * gridSize - 1;
+
+          if (isEmpty) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                border: Border.all(color: Colors.grey[400]!, width: 1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Center(
+                child: Icon(Icons.close, size: 12, color: Colors.grey[600]),
+              ),
+            );
+          }
+          if (index >= widget.imagePieces!.length) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.red[100],
+                border: Border.all(color: Colors.red[400]!, width: 1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Center(
+                child: Text(
+                  'Error',
+                  style: TextStyle(fontSize: 8, color: Colors.red[800]),
+                ),
+              ),
+            );
+          }
+
+          return Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[400]!, width: 1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: Image.memory(
+                widget.imagePieces![index],
+                fit: BoxFit.cover,
+              ),
             ),
           );
         },

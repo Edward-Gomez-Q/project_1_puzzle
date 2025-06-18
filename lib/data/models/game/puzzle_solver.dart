@@ -163,7 +163,6 @@ class PuzzleSolver {
     while (openSet.isNotEmpty && nodesExplored < maxNodes) {
       // Verificar timeout
       if (DateTime.now().difference(startTime).inMilliseconds > maxTime) {
-        print('A* timeout después de ${nodesExplored} nodos');
         return null;
       }
 
@@ -172,7 +171,6 @@ class PuzzleSolver {
       nodesExplored++;
 
       if (isSolved(current.puzzle)) {
-        print('A* encontró solución en ${nodesExplored} nodos');
         return reconstructPath(current);
       }
 
@@ -196,8 +194,6 @@ class PuzzleSolver {
         }
       }
     }
-
-    print('A* no encontró solución en ${nodesExplored} nodos');
     return null;
   }
 
@@ -221,20 +217,15 @@ class PuzzleSolver {
       );
 
       if (newThreshold == -1) {
-        print('IDA* encontró solución en ${result.length} movimientos');
         return result;
       }
 
       if (newThreshold == threshold) {
-        print('IDA* sin progreso en threshold $threshold');
         break;
       }
 
       threshold = newThreshold;
-      print('IDA* aumentando threshold a $threshold');
     }
-
-    print('IDA* no encontró solución hasta profundidad $maxDepth');
     return null;
   }
 
@@ -300,7 +291,6 @@ class PuzzleSolver {
     } else if (gridSize == 4) {
       solution = solveWithAStar(currentPuzzle, maxNodes: 50000, maxTime: 3000);
       if (solution == null) {
-        print('A* falló, intentando IDA*...');
         solution = solveWithIDAStar(currentPuzzle, maxDepth: 60);
       }
     } else {

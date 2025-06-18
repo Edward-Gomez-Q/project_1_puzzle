@@ -31,6 +31,7 @@ class AppRouter {
             context,
             state,
             Game(
+              imagePieces: extra['imagePieces'],
               pattern: extra['pattern'],
               difficulty: extra['difficulty'],
               gameMode: extra['gameMode'],

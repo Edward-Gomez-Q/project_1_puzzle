@@ -6,6 +6,10 @@ import 'package:project_1_puzzle/data/models/home/menu_action_type.dart';
 import 'package:project_1_puzzle/presentation/pages/home/widgets/carousel_card.dart';
 import 'package:project_1_puzzle/presentation/pages/home/widgets/menu.dart';
 import 'package:project_1_puzzle/presentation/widgets/overlay.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
+import 'dart:io';
+import 'dart:typed_data';
 
 class Home extends StatefulWidget {
   final List<CarouselItemData> itemsPattern = [
@@ -87,6 +91,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   CarouselItemData? selectedDifficulty;
   CarouselItemData? selectedSort;
 
+  File? selectedImage;
+  List<Uint8List>? imagePieces;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -158,7 +166,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     Align(
                       alignment: Alignment.center,
                       child: Text(
-                        "¡Elige tu modo de juego!",
+                        "¡Configuración de juego!",
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ),
@@ -210,7 +218,41 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           ),
                           Column(
                             children: [
-                              SizedBox(height: 12),
+                              if (selectedImage == null) ...[
+                                ElevatedButton.icon(
+                                  onPressed: _pickImage,
+                                  icon: Icon(Icons.add_photo_alternate),
+                                  label: Text('Subir Foto'),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                              ] else ...[
+                                ElevatedButton.icon(
+                                  onPressed: _cancelPhoto,
+                                  icon: Icon(Icons.cancel),
+                                  label: Text('Cancelar Foto'),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    backgroundColor: Colors.red[400],
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                              ],
                               ElevatedButton.icon(
                                 onPressed:
                                     selectedPattern != null &&
@@ -302,7 +344,119 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
+  Future<void> _pickImage() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text('Galería'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final XFile? image = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                    imageQuality: 80,
+                  );
+                  if (image != null) {
+                    await _processImage(File(image.path));
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_camera),
+                title: Text('Cámara'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final XFile? image = await _picker.pickImage(
+                    source: ImageSource.camera,
+                    imageQuality: 80,
+                  );
+                  if (image != null) {
+                    await _processImage(File(image.path));
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _processImage(File imageFile) async {
+    try {
+      setState(() {
+        selectedImage = imageFile;
+      });
+
+      if (selectedDifficulty != null) {
+        await _divideImage();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al procesar la imagen: $e')),
+      );
+    }
+  }
+
+  Future<void> _divideImage() async {
+    if (selectedImage == null || selectedDifficulty == null) return;
+
+    try {
+      final bytes = await selectedImage!.readAsBytes();
+      final image = img.decodeImage(bytes);
+
+      if (image == null) return;
+
+      final gridSize = int.parse(selectedDifficulty!.code);
+      final pieceWidth = image.width ~/ gridSize;
+      final pieceHeight = image.height ~/ gridSize;
+
+      List<Uint8List> pieces = [];
+
+      for (int row = 0; row < gridSize; row++) {
+        for (int col = 0; col < gridSize; col++) {
+          if (row == gridSize - 1 && col == gridSize - 1) {
+            continue;
+          }
+
+          final piece = img.copyCrop(
+            image,
+            x: col * pieceWidth,
+            y: row * pieceHeight,
+            width: pieceWidth,
+            height: pieceHeight,
+          );
+
+          final pieceBytes = img.encodePng(piece);
+          pieces.add(Uint8List.fromList(pieceBytes));
+        }
+      }
+
+      setState(() {
+        imagePieces = pieces;
+      });
+    } catch (e) {
+      print('Error dividiendo imagen: $e');
+    }
+  }
+
+  void _cancelPhoto() {
+    setState(() {
+      selectedImage = null;
+      imagePieces = null;
+    });
+  }
+
   Widget carouselBuilder(List<CarouselItemData> items, String carouselType) {
+    if (selectedImage != null &&
+        (carouselType == "pattern" || carouselType == "sort")) {
+      return SizedBox.shrink();
+    }
+
     return CarouselSlider.builder(
       itemCount: items.length,
       options: CarouselOptions(
@@ -323,6 +477,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               case 'difficulty':
                 selectedDifficultyIndex = index;
                 selectedDifficulty = items[index];
+                if (selectedImage != null) {
+                  _divideImage();
+                }
                 break;
               case 'sort':
                 selectedSortIndex = index;
@@ -463,7 +620,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Widget buildPuzzlePreview() {
-    if (selectedPattern == null || selectedDifficulty == null) {
+    if (selectedDifficulty == null) {
       return Container(
         height: 120,
         width: 120,
@@ -473,14 +630,33 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         ),
         child: Center(
           child: Text(
-            'Selecciona opciones',
+            'Selecciona dificultad',
             style: TextStyle(color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ),
       );
     }
-
+    if (selectedImage != null && imagePieces != null) {
+      return _buildImagePreview();
+    }
+    if (selectedPattern == null) {
+      return Container(
+        height: 120,
+        width: 120,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            'Selecciona patrón o sube foto',
+            style: TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
     int gridSize = int.parse(selectedDifficulty!.code);
     puzzleContent = generatePuzzleContent(
       gridSize,
@@ -535,8 +711,103 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildImagePreview() {
+    if (imagePieces == null || selectedDifficulty == null) {
+      return Container(
+        height: 120,
+        width: 120,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    int gridSize = int.parse(selectedDifficulty!.code);
+
+    return SizedBox(
+      height: 120,
+      width: 120,
+      child: GridView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: gridSize,
+          childAspectRatio: 1.0,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemCount: gridSize * gridSize,
+        itemBuilder: (context, index) {
+          bool isEmpty = index == gridSize * gridSize - 1;
+
+          if (isEmpty) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                border: Border.all(color: Colors.grey[400]!, width: 1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Center(
+                child: Icon(Icons.close, size: 12, color: Colors.grey[600]),
+              ),
+            );
+          }
+          if (index >= imagePieces!.length) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.red[100],
+                border: Border.all(color: Colors.red[400]!, width: 1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Center(
+                child: Text(
+                  'Error',
+                  style: TextStyle(fontSize: 8, color: Colors.red[800]),
+                ),
+              ),
+            );
+          }
+
+          return Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[400]!, width: 1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: Image.memory(imagePieces![index], fit: BoxFit.cover),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void startGameWithConfig() {
-    if (selectedPattern != null && selectedDifficulty != null) {
+    if (selectedDifficulty == null) return;
+    if (selectedImage != null && imagePieces != null) {
+      puzzleContent = generatePuzzleContent(
+        int.parse(selectedDifficulty!.code),
+        '123',
+        'ASC',
+      );
+      puzzleContent.add('X');
+      GoRouter.of(context).push(
+        '/game',
+        extra: {
+          'imagePieces': imagePieces,
+          'difficulty': selectedDifficulty!.code,
+          'gameMode': 'ASC',
+          'puzzles': puzzleContent,
+          'pattern': '123',
+        },
+      );
+    } else if (selectedPattern == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, selecciona un patrón')),
+      );
+    } else {
       puzzleContent.add('X');
       GoRouter.of(context).push(
         '/game',
@@ -546,10 +817,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           'gameMode': selectedSort?.code ?? 'ASC',
           'puzzles': puzzleContent,
         },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, selecciona todas las opciones')),
       );
     }
   }
